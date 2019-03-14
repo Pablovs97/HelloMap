@@ -21,133 +21,53 @@ import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.OnMapReadyCallback;
 import com.google.android.gms.maps.SupportMapFragment;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
-import com.google.android.gms.maps.model.ButtCap;
-import com.google.android.gms.maps.model.Cap;
 import com.google.android.gms.maps.model.CustomCap;
-import com.google.android.gms.maps.model.Dash;
-import com.google.android.gms.maps.model.Dot;
-import com.google.android.gms.maps.model.Gap;
 import com.google.android.gms.maps.model.JointType;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.PatternItem;
 import com.google.android.gms.maps.model.Polyline;
 import com.google.android.gms.maps.model.PolylineOptions;
-import com.google.android.gms.maps.model.RoundCap;
-import com.google.android.gms.maps.model.SquareCap;
-
 import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
-import android.widget.AdapterView;
-import android.widget.AdapterView.OnItemSelectedListener;
-import android.widget.ArrayAdapter;
 import android.widget.CheckBox;
-import android.widget.SeekBar;
-import android.widget.SeekBar.OnSeekBarChangeListener;
-import android.widget.Spinner;
-
-import java.util.Arrays;
-import java.util.List;
 
 /**
  * This shows how to draw polylines on a map.
  */
-public class PolylineActivity extends AppCompatActivity
-        implements OnSeekBarChangeListener, OnItemSelectedListener, OnMapReadyCallback {
+public class PolylineActivity extends AppCompatActivity implements OnMapReadyCallback {
 
-    // City locations for mutable polyline.
-    private static final LatLng POINT_1 = new LatLng(41.607094, 0.621620);
-    private static final LatLng POINT_2 = new LatLng(41.609380, 0.624281);
-    private static final LatLng POINT_3 = new LatLng(41.612388, 0.619313);
-    private static final LatLng POINT_4 = new LatLng(41.615794, 0.620863);
+    // Locations for Route 1
+    private static final LatLng R1_POINT_1 = new LatLng(41.607094, 0.621620);
+    private static final LatLng R1_POINT_2 = new LatLng(41.609380, 0.624281);
+    private static final LatLng R1_POINT_3 = new LatLng(41.612388, 0.619313);
+    private static final LatLng R1_POINT_4 = new LatLng(41.615794, 0.620863);
 
-    private static final int MAX_WIDTH_PX = 100;
-    private static final int MAX_HUE_DEGREES = 360;
-    private static final int MAX_ALPHA = 255;
+    // Locations for Route 2
+    private static final LatLng R2_POINT_1 = new LatLng(41.608735, 0.627812);
+    private static final LatLng R2_POINT_2 = new LatLng(41.609489, 0.626525);
+    private static final LatLng R2_POINT_3 = new LatLng(41.611182, 0.627458);
+    private static final LatLng R2_POINT_4 = new LatLng(41.612128, 0.628627);
+    private static final LatLng R2_POINT_5 = new LatLng(41.612284, 0.631406);
+    private static final LatLng R2_POINT_6 = new LatLng(41.613724, 0.630167);
+    private static final LatLng R2_POINT_7 = new LatLng(41.615108, 0.627565);
+
     private static final int CUSTOM_CAP_IMAGE_REF_WIDTH_PX = 50;
-    private static final int INITIAL_STROKE_WIDTH_PX = 5;
 
-    private static final int PATTERN_DASH_LENGTH_PX = 50;
-    private static final int PATTERN_GAP_LENGTH_PX = 20;
-    private static final Dot DOT = new Dot();
-    private static final Dash DASH = new Dash(PATTERN_DASH_LENGTH_PX);
-    private static final Gap GAP = new Gap(PATTERN_GAP_LENGTH_PX);
-    private static final List<PatternItem> PATTERN_DOTTED = Arrays.asList(DOT, GAP);
-    private static final List<PatternItem> PATTERN_DASHED = Arrays.asList(DASH, GAP);
-    private static final List<PatternItem> PATTERN_MIXED = Arrays.asList(DOT, GAP, DOT, DASH, GAP);
+    CheckBox cb1, cb2;
 
-    private Polyline mMutablePolyline;
-    private SeekBar mHueBar;
-    private SeekBar mAlphaBar;
-    private SeekBar mWidthBar;
-    private Spinner mStartCapSpinner;
-    private Spinner mEndCapSpinner;
-    private Spinner mJointTypeSpinner;
-    private Spinner mPatternSpinner;
-    private CheckBox mClickabilityCheckbox;
+    private Polyline polyline1;
+    private Polyline polyline2;
 
-    // These are the options for polyline caps, joints and patterns. We use their
-    // string resource IDs as identifiers.
-
-    private static final int[] CAP_TYPE_NAME_RESOURCE_IDS = {
-            R.string.cap_image, // Default
-            R.string.cap_butt,
-            R.string.cap_round,
-            R.string.cap_square,
-    };
-
-    private static final int[] JOINT_TYPE_NAME_RESOURCE_IDS = {
-            R.string.joint_type_default, // Default
-            R.string.joint_type_bevel,
-            R.string.joint_type_round,
-    };
-
-    private static final int[] PATTERN_TYPE_NAME_RESOURCE_IDS = {
-            R.string.pattern_solid, // Default
-            R.string.pattern_dashed,
-            R.string.pattern_dotted,
-            R.string.pattern_mixed,
-    };
+    private GoogleMap g_map;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.polylines_demo);
 
-        mHueBar = (SeekBar) findViewById(R.id.hueSeekBar);
-        mHueBar.setMax(MAX_HUE_DEGREES);
-        mHueBar.setProgress(0);
-
-        mAlphaBar = (SeekBar) findViewById(R.id.alphaSeekBar);
-        mAlphaBar.setMax(MAX_ALPHA);
-        mAlphaBar.setProgress(MAX_ALPHA);
-
-        mWidthBar = (SeekBar) findViewById(R.id.widthSeekBar);
-        mWidthBar.setMax(MAX_WIDTH_PX);
-        mWidthBar.setProgress(MAX_WIDTH_PX / 5);
-
-        mStartCapSpinner = (Spinner) findViewById(R.id.startCapSpinner);
-        mStartCapSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item,
-                getResourceStrings(CAP_TYPE_NAME_RESOURCE_IDS)));
-
-        mEndCapSpinner = (Spinner) findViewById(R.id.endCapSpinner);
-        mEndCapSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item,
-                getResourceStrings(CAP_TYPE_NAME_RESOURCE_IDS)));
-
-        mJointTypeSpinner = (Spinner) findViewById(R.id.jointTypeSpinner);
-        mJointTypeSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item,
-                getResourceStrings(JOINT_TYPE_NAME_RESOURCE_IDS)));
-
-        mPatternSpinner = (Spinner) findViewById(R.id.patternSpinner);
-        mPatternSpinner.setAdapter(new ArrayAdapter<>(
-                this, android.R.layout.simple_spinner_item,
-                getResourceStrings(PATTERN_TYPE_NAME_RESOURCE_IDS)));
-
-        mClickabilityCheckbox = (CheckBox) findViewById(R.id.toggleClickability);
+        cb1 = (CheckBox)findViewById(R.id.checkBox1);
+        cb2 = (CheckBox)findViewById(R.id.checkBox2);
 
         SupportMapFragment mapFragment =
                 (SupportMapFragment) getSupportFragmentManager().findFragmentById(R.id.map);
@@ -167,145 +87,57 @@ public class PolylineActivity extends AppCompatActivity
 
         // Override the default content description on the view, for accessibility mode.
         map.setContentDescription(getString(R.string.polyline_demo_description));
+        g_map = map;
+    }
 
-        // A simple polyline. This polyline will be mutable.
-        int color = Color.HSVToColor(
-                mAlphaBar.getProgress(), new float[]{mHueBar.getProgress(), 1, 1});
-        mMutablePolyline = map.addPolyline(new PolylineOptions()
-                .color(color)
-                .width(mWidthBar.getProgress())
-                .clickable(mClickabilityCheckbox.isChecked())
-                .add(POINT_1, POINT_2, POINT_3, POINT_4));
+    public void showRuta1(View view){
 
-        mHueBar.setOnSeekBarChangeListener(this);
-        mAlphaBar.setOnSeekBarChangeListener(this);
-        mWidthBar.setOnSeekBarChangeListener(this);
+        if(cb1.isChecked()){
+            // A simple polyline. This polyline will be mutable.
+            int color = Color.HSVToColor(255, new float[]{1, 1, 1});
 
-        mStartCapSpinner.setOnItemSelectedListener(this);
-        mEndCapSpinner.setOnItemSelectedListener(this);
-        mJointTypeSpinner.setOnItemSelectedListener(this);
-        mPatternSpinner.setOnItemSelectedListener(this);
+            polyline1 = g_map.addPolyline(new PolylineOptions()
+                    .color(color)
+                    .width(20)
+                    .clickable(false)
+                    .add(R1_POINT_1, R1_POINT_2, R1_POINT_3, R1_POINT_4));
 
-        mMutablePolyline.setStartCap(getSelectedCap(mStartCapSpinner.getSelectedItemPosition()));
-        mMutablePolyline.setEndCap(getSelectedCap(mEndCapSpinner.getSelectedItemPosition()));
-        mMutablePolyline.setJointType(getSelectedJointType(mJointTypeSpinner.getSelectedItemPosition()));
-        mMutablePolyline.setPattern(getSelectedPattern(mPatternSpinner.getSelectedItemPosition()));
+            polyline1.setStartCap(new CustomCap(BitmapDescriptorFactory.fromResource(R.drawable.chevron), 50));
+            polyline1.setEndCap(new CustomCap(BitmapDescriptorFactory.fromResource(R.drawable.meta), 300));
+            polyline1.setJointType(JointType.DEFAULT);
+            polyline1.setPattern(null);
 
-        // Move the map so that it is centered on the mutable polyline.
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(POINT_2, 15));
-
-        // Add a listener for polyline clicks that changes the clicked polyline's color.
-        map.setOnPolylineClickListener(new GoogleMap.OnPolylineClickListener() {
-            @Override
-            public void onPolylineClick(Polyline polyline) {
-                // Flip the values of the red, green and blue components of the polyline's color.
-                polyline.setColor(polyline.getColor() ^ 0x00ffffff);
+            // Move the map so that it is centered on the mutable polyline.
+            g_map.moveCamera(CameraUpdateFactory.newLatLngZoom(R1_POINT_2, 15));
+        } else {
+            if (polyline1 != null){
+                polyline1.remove();
             }
-        });
-    }
-
-    private Cap getSelectedCap(int pos) {
-        switch (CAP_TYPE_NAME_RESOURCE_IDS[pos]) {
-            case R.string.cap_butt:
-                return new ButtCap();
-            case R.string.cap_square:
-                return new SquareCap();
-            case R.string.cap_round:
-                return new RoundCap();
-            case R.string.cap_image:
-                return new CustomCap(
-                        BitmapDescriptorFactory.fromResource(R.drawable.chevron),
-                        CUSTOM_CAP_IMAGE_REF_WIDTH_PX);
-        }
-        return null;
-    }
-
-    private int getSelectedJointType(int pos) {
-        switch (JOINT_TYPE_NAME_RESOURCE_IDS[pos]) {
-            case R.string.joint_type_bevel:
-                return JointType.BEVEL;
-            case R.string.joint_type_round:
-                return JointType.ROUND;
-            case R.string.joint_type_default:
-                return JointType.DEFAULT;
-        }
-        return 0;
-    }
-
-    private List<PatternItem> getSelectedPattern(int pos) {
-        switch (PATTERN_TYPE_NAME_RESOURCE_IDS[pos]) {
-            case R.string.pattern_solid:
-                return null;
-            case R.string.pattern_dotted:
-                return PATTERN_DOTTED;
-            case R.string.pattern_dashed:
-                return PATTERN_DASHED;
-            case R.string.pattern_mixed:
-                return PATTERN_MIXED;
-            default:
-                return null;
         }
     }
 
-    @Override
-    public void onItemSelected(AdapterView<?> parent, View view, int pos, long id) {
-        switch (parent.getId()) {
-            case R.id.startCapSpinner:
-                mMutablePolyline.setStartCap(getSelectedCap(pos));
-                break;
-            case R.id.endCapSpinner:
-                mMutablePolyline.setEndCap(getSelectedCap(pos));
-                break;
-            case R.id.jointTypeSpinner:
-                mMutablePolyline.setJointType(getSelectedJointType(pos));
-                break;
-            case R.id.patternSpinner:
-                mMutablePolyline.setPattern(getSelectedPattern(pos));
-                break;
-        }
-    }
+    public void showRuta2(View view){
+        if(cb2.isChecked()){
+            // A simple polyline. This polyline will be mutable.
+            int color = Color.HSVToColor(255, new float[]{1, 1, 1});
 
-    @Override
-    public void onNothingSelected(AdapterView<?> parent) {
-        // Don't do anything here.
-    }
+            polyline2 = g_map.addPolyline(new PolylineOptions()
+                    .color(color)
+                    .width(20)
+                    .clickable(false)
+                    .add(R2_POINT_1, R2_POINT_2, R2_POINT_3, R2_POINT_4, R2_POINT_5, R2_POINT_6, R2_POINT_7));
 
-    @Override
-    public void onStopTrackingTouch(SeekBar seekBar) {
-        // Don't do anything here.
-    }
+            polyline2.setStartCap(new CustomCap(BitmapDescriptorFactory.fromResource(R.drawable.chevron), CUSTOM_CAP_IMAGE_REF_WIDTH_PX));
+            polyline2.setEndCap(new CustomCap(BitmapDescriptorFactory.fromResource(R.drawable.meta), 300));
+            polyline2.setJointType(JointType.DEFAULT);
+            polyline2.setPattern(null);
 
-    @Override
-    public void onStartTrackingTouch(SeekBar seekBar) {
-        // Don't do anything here.
-    }
-
-    @Override
-    public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-        if (mMutablePolyline == null) {
-            return;
-        }
-
-        if (seekBar == mHueBar) {
-            mMutablePolyline.setColor(Color.HSVToColor(
-                    Color.alpha(mMutablePolyline.getColor()), new float[]{progress, 1, 1}));
-        } else if (seekBar == mAlphaBar) {
-            float[] prevHSV = new float[3];
-            Color.colorToHSV(mMutablePolyline.getColor(), prevHSV);
-            mMutablePolyline.setColor(Color.HSVToColor(progress, prevHSV));
-        } else if (seekBar == mWidthBar) {
-            mMutablePolyline.setWidth(progress);
-        }
-    }
-
-    /**
-     * Toggles the clickability of the polyline based on the state of the View that triggered this
-     * call.
-     * This callback is defined on the CheckBox in the layout for this Activity.
-     */
-    public void toggleClickability(View view) {
-        if (mMutablePolyline != null) {
-            mMutablePolyline.setClickable(((CheckBox) view).isChecked());
+            // Move the map so that it is centered on the mutable polyline.
+            g_map.moveCamera(CameraUpdateFactory.newLatLngZoom(R2_POINT_2, 15));
+        } else {
+            if (polyline2 != null){
+                polyline2.remove();
+            }
         }
     }
 }
